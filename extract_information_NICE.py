@@ -6,7 +6,7 @@ import re
 from sentence_transformers import SentenceTransformer, util
 import torch
 
-model = SentenceTransformer('michiyasunaga/BioLinkBERT-base')
+model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 
 def get_url_data(extension):
@@ -42,18 +42,22 @@ def get_guidance_menu_links(soup):
 
 def classify_nice_guidance(text):
     # Categories based on key phrases
-    if "is not recommended" in text:
-        return "Not Recommended"
-    elif "recommended as an option for treating" in text and "Cancer Drugs Fund" in text:
-        return "Recommended-CDF"
-    elif "recommended as an option for" in text and "only if" in text:
-        return "Optimised"
-    elif "recommended for use" and "Cancer Drugs Fund" in text:
-        return "Optimised-CDF"
-    elif "recommended, within its marketing authorisation" in text or "recommended" in text:
-        return "Recommended"
+    if 'cancer drugs fund' in text.lower():
+        CDF = True
     else:
-        return "Uncategorized"
+        CDF = False
+    if "is not recommended" in text:
+        return "Not Recommended", CDF
+    # elif "recommended as an option for treating" in text and "Cancer Drugs Fund" in text:
+    #     return "Recommended-CDF"
+    elif "recommended as an option for" in text and "only if" in text:
+        return "Optimised",CDF
+    # elif "recommended for use" and "Cancer Drugs Fund" in text:
+    #     return "Optimised-CDF"
+    elif "recommended, within its marketing authorisation" in text or "recommended" in text:
+        return "Recommended",CDF
+    else:
+        return "Uncategorized",CDF
 
 
 
@@ -63,17 +67,15 @@ def classify_nice_guidance_dynamic(text):
 
     # Predefined category descriptions (these should ideally be expanded or refined)
     categories = {
-        "Recommended": "recommended within its marketing authorisation for use.",
-        "Optimised": "recommended with specific conditions for its use.",
-        #"Optimised-CDF": "recommended for use within the Cancer Drugs Fund with specific conditions.",
-        #"Recommended-CDF": "recommended for use within the Cancer Drugs Fund."
+        "Recommended": "recommended within its marketing authorisation.",
+        "Optimised": "recommended with specific conditions.",
     }
 
     # Embed the input text and category descriptions
     text_embedding = model.encode(text, convert_to_tensor=True)
     category_embeddings = model.encode(list(categories.values()), convert_to_tensor=True)
 
-    if 'cancer' in text.lower():
+    if 'cancer drugs fund' in text.lower():
         CDF=True
     else:
         CDF=False
@@ -94,7 +96,7 @@ def get_recommendation_reason(div_soup):
     CDF=False
     if div_soup.find('div'):
         recommendation_text=div_soup.find('div').get_text(strip=True)
-        recommendation_cat,CDF=classify_nice_guidance_dynamic(recommendation_text)
+        recommendation_cat,CDF=classify_nice_guidance(recommendation_text)
         strong_tag = div_soup.find('strong', string="Why the committee made these recommendations")
         if strong_tag:
             for next_p in strong_tag.find_all_next('p'):

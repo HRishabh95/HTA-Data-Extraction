@@ -24,9 +24,8 @@ def get_url_data(url):
 
 TAR=pd.read_csv('evidence_NICE_lists.csv',sep=',')
 
-# extensions=['/guidance/ta949','guidance/ta950','guidance/ta951','guidance/ta948']
-final_csv=[]
 
+data = []
 
 for row in TAR.iterrows():
     title=row[1]['Title']
@@ -35,36 +34,60 @@ for row in TAR.iterrows():
 
     url=f'''{row[1]['Link']}/chapter/3-Committee-discussion'''
     html_content = get_url_data(url)
-    soup = BeautifulSoup(html_content, 'html.parser')
-    if "Committee" in soup.find('title').string and "discussion" in soup.find('title').string:
-        # Find all <li> elements
-        li_elements = soup.select('.in-page-nav__list .in-page-nav__item')
+    if html_content:
+        soup = BeautifulSoup(html_content, 'html.parser')
+        if "Committee" in soup.find('title').string and "discussion" in soup.find('title').string:
+            # Find all <li> elements
+            li_elements = soup.select('.in-page-nav__list .in-page-nav__item')
 
-        # Initialize an empty list to store the data
-        data = []
+            # Initialize an empty list to store the data
+            condition = ''
+            cost = ''
+            clinical=''
+            conclusion=''
+            # Loop through each <li> element
+            for li in li_elements:
+                a_tag = li.find('a')
+                section_title = a_tag.text.strip()
+                section_link = a_tag['href'].strip()
+                if "Condition" in section_title or 'condition' in section_title or 'Background' in section_title \
+                        or 'clinical need' in section_title.lower():
+                    # Find the corresponding <div> with the matching title
+                    div_section = soup.find('div', title=section_title)
 
-        # Loop through each <li> element
-        for li in li_elements:
-            a_tag = li.find('a')
-            section_title = a_tag.text.strip()
-            section_link = a_tag['href'].strip()
+                    # Extract text from the found <div> if it exists
+                    div_section_p=div_section.find_all('p')
+                    for i in div_section_p:
+                        condition+=i.get_text(strip=True, separator=' ')
+                elif "Clinical" in section_title:
+                    div_section = soup.find('div', title=section_title)
 
-            # Find the corresponding <div> with the matching title
-            div_section = soup.find('div', title=section_title)
+                    # Extract text from the found <div> if it exists
+                    div_section_p = div_section.find_all('p')
+                    for i in div_section_p:
+                        clinical += i.get_text(strip=True, separator=' ')
+                elif "Cost" in section_title:
+                    div_section = soup.find('div', title=section_title)
 
-            # Extract text from the found <div> if it exists
-            div_section_p=div_section.find_all('p')
-            div_texts=''
-            for i in div_section_p:
-                div_texts+=i.get_text(strip=True, separator=' ')
+                    # Extract text from the found <div> if it exists
+                    div_section_p = div_section.find_all('p')
+                    for i in div_section_p:
+                        cost += i.get_text(strip=True, separator=' ')
+                elif "Conclusion" in section_title:
+                    div_section = soup.find('div', title=section_title)
 
-            # Append the extracted information to the data list
-            data.append([section_title, section_link, div_texts])
+                    # Extract text from the found <div> if it exists
+                    div_section_p = div_section.find_all('p')
+                    for i in div_section_p:
+                        conclusion += i.get_text(strip=True, separator=' ')
+
+                # Append the extracted information to the data list
+            data.append([TAnumber,condition, clinical, cost,conclusion])
 
 # Convert the list to a pandas DataFrame
-df = pd.DataFrame(data, columns=['Section Title', 'Link', 'Section Text'])
+df = pd.DataFrame(data, columns=['TAnumber','Introduction', 'Clinical', 'Cost','Conclusion'])
 
 # Save the DataFrame to a CSV file
-csv_file_path = '/mnt/data/extracted_sections.csv'
-df.to_csv(csv_file_path, index=False)
+csv_file_path = 'extracted_reviews.csv'
+df.to_csv(csv_file_path, index=False,sep='\t')
 
