@@ -3,6 +3,11 @@ from bs4 import BeautifulSoup
 import os
 import pandas as pd
 import re
+from sentence_transformers import SentenceTransformer, util
+import torch
+
+model = SentenceTransformer('michiyasunaga/BioLinkBERT-base')
+
 
 def get_url_data(extension):
     url = f'''https://www.nice.org.uk{extension}'''
@@ -51,26 +56,27 @@ def classify_nice_guidance(text):
         return "Uncategorized"
 
 
-from sentence_transformers import SentenceTransformer, util
-import torch
 
 
 def classify_nice_guidance_dynamic(text):
     # Load the sentence transformer model
-    model = SentenceTransformer('michiyasunaga/BioLinkBERT-base')
 
     # Predefined category descriptions (these should ideally be expanded or refined)
     categories = {
         "Recommended": "recommended within its marketing authorisation for use.",
         "Optimised": "recommended with specific conditions for its use.",
-        "Optimised-CDF": "recommended for use within the Cancer Drugs Fund with specific conditions.",
-        "Recommended-CDF": "recommended for use within the Cancer Drugs Fund."
+        #"Optimised-CDF": "recommended for use within the Cancer Drugs Fund with specific conditions.",
+        #"Recommended-CDF": "recommended for use within the Cancer Drugs Fund."
     }
 
     # Embed the input text and category descriptions
     text_embedding = model.encode(text, convert_to_tensor=True)
     category_embeddings = model.encode(list(categories.values()), convert_to_tensor=True)
 
+    if 'cancer' in text.lower():
+        CDF=True
+    else:
+        CDF=False
     # Compute cosine similarities
     cosine_scores = util.pytorch_cos_sim(text_embedding, category_embeddings)
 
@@ -78,23 +84,24 @@ def classify_nice_guidance_dynamic(text):
     highest_score_index = torch.argmax(cosine_scores).item()
     category = list(categories.keys())[highest_score_index]
 
-    return category
+    return category,CDF
 
 
 def get_recommendation_reason(div_soup):
     reason_text=''
     recommendation_text = ''
     recommendation_cat=''
+    CDF=False
     if div_soup.find('div'):
         recommendation_text=div_soup.find('div').get_text(strip=True)
-        recommendation_cat=classify_nice_guidance(recommendation_text)
+        recommendation_cat,CDF=classify_nice_guidance_dynamic(recommendation_text)
         strong_tag = div_soup.find('strong', string="Why the committee made these recommendations")
         if strong_tag:
             for next_p in strong_tag.find_all_next('p'):
                 reason_text += next_p.get_text(strip=True) + " "
-        return recommendation_text,recommendation_cat,reason_text
+        return recommendation_text,recommendation_cat,CDF,reason_text
     else:
-        return recommendation_text,recommendation_cat,reason_text
+        return recommendation_text,recommendation_cat,CDF,reason_text
 
 def extract_size(size_str):
     # Extract the numerical value from the size string
@@ -194,6 +201,7 @@ for row in TAR.iterrows():
     authorization, dosage, price= '','',''
     html_content=get_url_data(extension)
     recommendation_cat= 'Not Recommended'
+    CDF=False
     end_of_life = False
     severity_modifiers = False
 
@@ -217,16 +225,16 @@ for row in TAR.iterrows():
             div_soup = soup.find('div', title=guidance_menu_lists[0])
         # Find the recommendation and reason sections
         if "recommendation" in make_id:
-            recommendation,recommendation_cat,reason=get_recommendation_reason(div_soup)
+            recommendation,recommendation_cat,CDF,reason=get_recommendation_reason(div_soup)
         if 'information-about' in make_id:
             authorization,dosage,price=get_information_medicine(div_soup)
 
-    final_csv.append([TAnumber,title,recommendation,recommendation_cat,reason,authorization,dosage,price,
+    final_csv.append([TAnumber,title,recommendation,recommendation_cat,CDF,reason,authorization,dosage,price,
                       end_of_life,severity_modifiers,file_path])
 
 dd=pd.DataFrame(final_csv)
 #Extract:
 #Indication,
-dd.columns=['TA_Number','Indication','Outcome','Category','Reasons','Initial Authorization'
+dd.columns=['TA_Number','Indication','Outcome','Category','CDF','Reasons','Initial Authorization'
                                                        ,'Dosage','Price','EoL','Severity Modifiers','committee_file_path']
 dd.to_csv('Recommendations_NICE_papers.tsv',sep='\t',index=False)
