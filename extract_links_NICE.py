@@ -3,6 +3,15 @@ from bs4 import BeautifulSoup
 import csv
 import psycopg2
 
+
+## Macbook install:
+# brew install postgresql
+# brew services start postgresql@14
+# psql postgres
+# \du (list of user)
+## set password for user:
+# \password username
+
 conn = psycopg2.connect(
     database="postgres",
     host="localhost",
