@@ -199,10 +199,14 @@ for row in TAR.iterrows():
     TAnumber=row[1]['TA Number']
     print(TAnumber)
     extension=f'''/{"/".join(row[1]['Link'].split("/")[-2:])}'''
-    recommendation, reason = 'Not Recommended',''
     authorization, dosage, price= '','',''
     html_content=get_url_data(extension)
-    recommendation_cat= 'Not Recommended'
+    if 'terminated' in title:
+        recommendation, reason = 'Terminated', ''
+        recommendation_cat= 'Terminated'
+    else:
+        recommendation, reason = 'Not Recommended', ''
+        recommendation_cat = 'Not Recommended'
     CDF=False
     end_of_life = False
     severity_modifiers = False
