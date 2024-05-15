@@ -3,40 +3,6 @@ from bs4 import BeautifulSoup
 import csv
 import psycopg2
 
-
-## Macbook install:
-# brew install postgresql
-# brew services start postgresql@14
-# psql postgres
-# \du (list of user)
-## set password for user:
-# \password username
-
-conn = psycopg2.connect(
-    database="postgres",
-    host="localhost",
-   user="ricky",
-   password="123456",
-   port= '5432'
-)
-
-conn.autocommit = True
-
-# Creating a cursor object
-cur = conn.cursor()
-
-# query to create a database
-# Create the table if it does not exist
-cur.execute('''
-    CREATE TABLE IF NOT EXISTS nice_lists (
-        title VARCHAR(500),
-        link VARCHAR(500),
-        ta_number VARCHAR(50) PRIMARY KEY,
-        publication_date DATE,
-        last_reviewed DATE
-    )
-''')
-
 url='https://www.nice.org.uk/guidance/published?ndt=Guidance&ngt=Technology%20appraisal%20guidance&ps=9999'
 
 headers = {
@@ -73,11 +39,6 @@ with open('evidence_NICE_lists.csv', 'w', newline='', encoding='utf-8') as csvfi
             last_reviewed = cols[3].text.strip()
 
             # Write the row data to the CSV file
-            cur.execute('''
-                            INSERT INTO nice_lists (title, link, ta_number, publication_date, last_reviewed)
-                            VALUES (%s, %s, %s, %s, %s)
-                        ''', (title, link, ta_number, publication_date, last_reviewed))
-            conn.commit()
             csvwriter.writerow([title, link, ta_number, publication_date, last_reviewed])
 
 print("CSV file with links has been created successfully.")
