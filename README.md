@@ -2,6 +2,9 @@
 
 Welcome to the Health Technology Assessment (HTA) Data Extraction and Analysis repository. This repository contains scripts and notebooks for extracting and processing data from various health technology assessment sources such as NICE (National Institute for Health and Care Excellence), SMC (Scottish Medicines Consortium). Additionally, it includes example of some other processing code for data extraction from pubmed.
 
+[Open in Google Colab](https://colab.research.google.com/drive/1jFb5-wOlgoDOfyrlmS_QrTYmzNQ_wm_l?usp=sharing)
+
+
 ## Table of Contents
 
 - [Introduction](#introduction)
