@@ -66,3 +66,12 @@ For data extraction from PubMed, refer to the `pubmed_example.py` script. This s
     python pubmed_example.py
   ```
 
+## Files
+
+- `extract_links_NICE.py`
+- `extract_information_NICE.py`
+- `extract_reviews_NICE.py`
+- `OCR_NICE.py`
+- `extract_links_SMC.py`
+- `extract_information_SMC.py`
+- `pubmed_example.py`
