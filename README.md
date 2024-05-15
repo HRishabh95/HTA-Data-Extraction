@@ -39,7 +39,6 @@ To extract data from NICE, use the `extract_links_NICE.py`, `extract_information
 3. `extract_reviews_NICE.py` : To extract reviews (committee meeting) from HTAs. Output: CSV file.
 4. `OCR_NICE.py` : To extract data from draft pdf of the HTAs. Output: CSV file.
 
-Example:
     ```bash
     python extract_links_NICE.py
     python extract_information_NICE.py
@@ -52,7 +51,6 @@ To extract data from SMC, use the `extract_links_SMC.py` and `extract_informatio
 1. `extract_links_SMC.py` : To extract list of HTAs in SMC with ID number, URL, publication date, title. Output: CSV file.
 2. `extract_information_SMC.py`: To extract metadata from each HTAs mentioned in above CSV file. Output: CSV file.
 
-Example:
     ```bash
     python extract_links_SMC.py
     python extract_information_SMC.py
@@ -63,8 +61,8 @@ List of Addition codes that can be helpful.
 
 ### Example: Extracting Data from PubMed
 For data extraction from PubMed, refer to the `pubmed_example.py` script. This script demonstrates how to query PubMed and process the results.
-Example:
-    ```bash
+
+  ```bash
     python pubmed_example.py
-    ```
+  ```
 
